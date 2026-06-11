@@ -19,13 +19,6 @@ class VectorTest extends TestCase
 {
     private const VECTORS_FILE = __DIR__ . '/vectors.json';
 
-    private array $vectors;
-
-    protected function setUp(): void
-    {
-        $this->vectors = $this->loadVectors();
-    }
-
     /**
      * @dataProvider vectorProvider
      */
@@ -52,11 +45,11 @@ class VectorTest extends TestCase
 
         return array_map(
             fn (array $v) => [
-                $v['method'],
-                $v['path'],
-                $v['timestamp'],
-                $v['secret'],
-                $v['expected_signature'],
+                $v['input']['method'],
+                $v['input']['path'],
+                $v['input']['timestamp'],
+                $v['input']['secret'],
+                $v['expected']['x-signature'],
                 $v['description'] ?? 'unnamed',
             ],
             $vectors,

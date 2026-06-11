@@ -7,8 +7,12 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Laravel service provider — auto-discovered via composer.json extra.laravel.providers.
  *
- * Registers the 'hmac' middleware alias so routes can use:
- *   Route::middleware('hmac:' . env('MCP_HMAC_SECRET'))
+ * Registers the 'hmac' middleware alias. The recommended usage is via McpRouter::register(),
+ * which binds the secret through the service container (avoids the comma-truncation footgun
+ * of string-param middleware). Direct usage:
+ *
+ *   app()->singleton('nexus-mcp.hmac_secret', fn () => env('MCP_HMAC_SECRET'));
+ *   Route::middleware(\Wazobia\NexusMcp\HmacMiddleware::class)->group(function () { ... });
  */
 class McpServiceProvider extends ServiceProvider
 {
