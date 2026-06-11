@@ -1,0 +1,32 @@
+image: php:8.2-cli
+
+pipelines:
+  default:
+    - step:
+        name: "Test — unit + contract vectors"
+        caches:
+          - composer
+        script:
+          # Install Composer
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+          # Install system libs needed by Guzzle
+          - apt-get update -qq && apt-get install -y -qq zip unzip libzip-dev git curl
+
+          # Install dependencies
+          - composer install --no-interaction --prefer-dist
+
+          # Run unit tests
+          - ./vendor/bin/phpunit --testsuite Unit
+
+          # Run contract vector tests (fetches vectors.json from public GitHub mirror)
+          - ./vendor/bin/phpunit --testsuite Contract
+
+  tags:
+    "v*":
+      - step:
+          name: "Publish to Packagist"
+          script:
+            - echo "Tag push detected — Packagist auto-updates via GitHub webhook."
+            - echo "No manual publish step required for Composer packages."
+            - echo "Ensure the GitHub mirror is tagged and Packagist webhook is configured."
