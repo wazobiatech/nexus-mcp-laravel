@@ -12,19 +12,19 @@ use Symfony\Component\HttpFoundation\Response;
  * Exempt paths (/health, /health/live, /health/ready) are passed through
  * without a signature so Kubernetes liveness/readiness probes work.
  *
- * Usage in routes/api.php:
+ * Usage via McpRouter::register() (recommended — secret bound via container):
  *
- *   Route::middleware(\Wazobia\NexusMcp\HmacMiddleware::class . ':' . env('MCP_HMAC_SECRET'))
- *       ->group(function () {
- *           Route::get('/mcp/manifest', ...);
- *           Route::post('/mcp/call', ...);
- *       });
+ *   McpRouter::register(manifest: $manifest, tools: $tools, secret: env('MCP_HMAC_SECRET'));
  *
- * Or register an alias in app/Http/Kernel.php:
+ * Direct usage (secret via container binding):
  *
- *   'hmac' => \Wazobia\NexusMcp\HmacMiddleware::class
+ *   app()->singleton('nexus-mcp.hmac_secret', fn () => env('MCP_HMAC_SECRET'));
+ *   Route::middleware(\Wazobia\NexusMcp\HmacMiddleware::class)->group(function () { ... });
  *
- * Then use: Route::middleware('hmac:' . env('MCP_HMAC_SECRET'))
+ * NOTE: Do NOT pass the secret as a middleware string parameter
+ * (Route::middleware(HmacMiddleware::class . ':' . $secret)).
+ * Laravel's param parser splits on commas, so any secret containing a comma
+ * would be silently truncated. The container binding avoids this entirely.
  */
 class HmacMiddleware
 {
@@ -45,12 +45,21 @@ class HmacMiddleware
     /**
      * Handle an incoming request.
      *
+     * The HMAC secret is resolved from the service container key 'nexus-mcp.hmac_secret'
+     * (bound by McpRouter::register). The optional $secret parameter is kept for
+     * backward compatibility but the container binding takes precedence.
+     *
      * @param Request $request
      * @param Closure(Request): Response $next
-     * @param string  $secret  Passed as middleware parameter: 'hmac:secret'
+     * @param string  $secret  Fallback secret (not recommended — see class docblock)
      */
     public function handle(Request $request, Closure $next, string $secret = ''): Response
     {
+        // Prefer container binding over the string param to avoid comma-truncation.
+        $secret = app()->bound('nexus-mcp.hmac_secret')
+            ? (string) app('nexus-mcp.hmac_secret')
+            : $secret;
+
         // Skip HMAC for health/probe paths
         if (in_array($request->getPathInfo(), $this->unprotected, true)) {
             return $next($request);

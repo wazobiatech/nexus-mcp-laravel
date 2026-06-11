@@ -1,0 +1,231 @@
+{
+  "version": "1.0.0",
+  "algorithm": "HMAC-SHA256",
+  "generated_by": "scripts/generate_vectors.py (Python stdlib hmac+hashlib)",
+  "vectors": [
+    {
+      "id": "vec-001",
+      "description": "Basic GET, root path",
+      "input": {
+        "method": "GET",
+        "path": "/",
+        "timestamp": "1717200000",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200000",
+        "x-signature": "e501655877ca714f9c92e2f354735369f8324c767166a34225248023975aceda"
+      }
+    },
+    {
+      "id": "vec-002",
+      "description": "Basic POST, simple path /mcp/call",
+      "input": {
+        "method": "POST",
+        "path": "/mcp/call",
+        "timestamp": "1717200001",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200001",
+        "x-signature": "17e7171ac97d74439d2de6e06aeed8f0ecf78b1f9c8db8628cc43d64eae7cf3b"
+      }
+    },
+    {
+      "id": "vec-003",
+      "description": "PUT request",
+      "input": {
+        "method": "PUT",
+        "path": "/api/v1/resource",
+        "timestamp": "1717200002",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200002",
+        "x-signature": "997bd8113c1a3d7450fec8ec28ed65856e934cb5bc6ee0358c5388f08486d33e"
+      }
+    },
+    {
+      "id": "vec-004",
+      "description": "DELETE request",
+      "input": {
+        "method": "DELETE",
+        "path": "/api/v1/resource/42",
+        "timestamp": "1717200003",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200003",
+        "x-signature": "c93eab16fa4fe2b183c9d5f14670cc7be48fc6ca5d4d5bc3460a4af82e00e681"
+      }
+    },
+    {
+      "id": "vec-005",
+      "description": "Path with query string /mcp/manifest?v=1",
+      "input": {
+        "method": "GET",
+        "path": "/mcp/manifest?v=1",
+        "timestamp": "1717200004",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200004",
+        "x-signature": "53a3b8ab632f86cd5c89ea994b917eebb7d2e790993c49a8f65c8d6f06fb6108"
+      }
+    },
+    {
+      "id": "vec-006",
+      "description": "Path with multiple query params /tools?limit=10&offset=0",
+      "input": {
+        "method": "GET",
+        "path": "/tools?limit=10&offset=0",
+        "timestamp": "1717200005",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200005",
+        "x-signature": "f690ad5c811602509d7dfa53aa4765997827f3b3bc038d21f7b14852f7bf12fa"
+      }
+    },
+    {
+      "id": "vec-007",
+      "description": "Timestamp exactly at boundary — 300s old (must pass)",
+      "input": {
+        "method": "GET",
+        "path": "/health",
+        "timestamp": "1717199700",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717199700",
+        "x-signature": "8101182643cb16894ae7bc7395fa3346648fa815460f956caab783b0bd9e0016"
+      }
+    },
+    {
+      "id": "vec-008",
+      "description": "Deep nested path /api/v1/mcp/tools/list",
+      "input": {
+        "method": "GET",
+        "path": "/api/v1/mcp/tools/list",
+        "timestamp": "1717200006",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200006",
+        "x-signature": "0e7f16a4d5a63ac7a12f9ddae91059c7946c2edc95736945bf38323741a4f759"
+      }
+    },
+    {
+      "id": "vec-009",
+      "description": "Secret with special characters s3cr3t!@#$",
+      "input": {
+        "method": "GET",
+        "path": "/",
+        "timestamp": "1717200007",
+        "secret": "s3cr3t!@#$"
+      },
+      "expected": {
+        "x-timestamp": "1717200007",
+        "x-signature": "8650c305037ca7d1506393b08848249a2e7d903b99fb81b25c9a94b3d7bc2185"
+      }
+    },
+    {
+      "id": "vec-010",
+      "description": "Secret with Unicode characters",
+      "input": {
+        "method": "GET",
+        "path": "/",
+        "timestamp": "1717200008",
+        "secret": "tëst-sëcrét-néxüs-日本語"
+      },
+      "expected": {
+        "x-timestamp": "1717200008",
+        "x-signature": "68dd986e35a97a1b886940b19481299c695bce98d7ddc22c9233189e3d1c287f"
+      }
+    },
+    {
+      "id": "vec-011",
+      "description": "Minimum timestamp (Unix epoch 0)",
+      "input": {
+        "method": "GET",
+        "path": "/",
+        "timestamp": "0",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "0",
+        "x-signature": "3413db9a4c6252d31ac086102297f661151800952f593e08ce02ede1fcea9712"
+      }
+    },
+    {
+      "id": "vec-012",
+      "description": "Large timestamp (year 2100)",
+      "input": {
+        "method": "GET",
+        "path": "/",
+        "timestamp": "4102444800",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "4102444800",
+        "x-signature": "d3c95694cefd1baabffbed0af633669784474133f5997a8622fb026dddd168aa"
+      }
+    },
+    {
+      "id": "vec-013",
+      "description": "Empty query string (trailing ?)",
+      "input": {
+        "method": "GET",
+        "path": "/mcp/manifest?",
+        "timestamp": "1717200009",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200009",
+        "x-signature": "13a2050ae1bee384aa44907f19b500725f0b86aceb8e85ae2e2028cb80c403c4"
+      }
+    },
+    {
+      "id": "vec-014",
+      "description": "Path with encoded characters /mcp/tools/%2Fslash",
+      "input": {
+        "method": "GET",
+        "path": "/mcp/tools/%2Fslash",
+        "timestamp": "1717200010",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200010",
+        "x-signature": "023b1bbd7d891b34082221ca60e1513aeb972ed2d7e73d630c3ba629939ca680"
+      }
+    },
+    {
+      "id": "vec-015",
+      "description": "POST with identical path to vector 5 but different secret",
+      "input": {
+        "method": "POST",
+        "path": "/mcp/manifest?v=1",
+        "timestamp": "1717200011",
+        "secret": "different-secret-key"
+      },
+      "expected": {
+        "x-timestamp": "1717200011",
+        "x-signature": "6aea1cf83b0c60edf423e1abb957b2da077c9ce27dd974d6209a08bf705a0526"
+      }
+    },
+    {
+      "id": "vec-016",
+      "description": "Empty path (edge case — no leading slash)",
+      "input": {
+        "method": "GET",
+        "path": "",
+        "timestamp": "1717200012",
+        "secret": "test-secret-nexus"
+      },
+      "expected": {
+        "x-timestamp": "1717200012",
+        "x-signature": "fe8a4a597cd4e9418870394f685a8f04855cb90c5248b0416c5428a6e12ff755"
+      }
+    }
+  ]
+}

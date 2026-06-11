@@ -60,7 +60,15 @@ class HmacClient
     /**
      * Build a full signed path, merging query params into the path string.
      *
-     * Guzzle appends `query` option after this call, but we must encode them
+     * Canonical form (must match server-side HmacMiddleware + all other SDKs):
+     *   - keys sorted ascending (ksort)
+     *   - values encoded with RFC3986 (spaces → %20, not +)
+     *
+     * Symfony's Request::getQueryString() uses normalizeQueryString() which
+     * ksorts and RFC3986-encodes. http_build_query() defaults to RFC1738 (+
+     * for spaces) and preserves insertion order — so we must be explicit here.
+     *
+     * Guzzle appends the `query` option after this call, but we encode them
      * here too so the signature covers the same string the server will verify.
      */
     private function signedPath(string $path, array $query = []): string
@@ -69,7 +77,9 @@ class HmacClient
             return $path;
         }
 
-        return $path . '?' . http_build_query($query);
+        ksort($query);
+
+        return $path . '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
     /**

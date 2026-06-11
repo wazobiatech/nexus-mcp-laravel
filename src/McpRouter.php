@@ -4,6 +4,7 @@ namespace Wazobia\NexusMcp;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -50,12 +51,20 @@ class McpRouter
             return response()->json(['status' => 'ok']);
         });
 
-        // HMAC-protected routes
-        $middlewareSecret = HmacMiddleware::class . ':' . $secret;
+        // Bind secret via container — avoids the middleware-param comma-truncation footgun
+        // (Laravel's param parser splits on commas; hex/base64 secrets are safe today
+        //  but an arbitrary secret containing a comma would be silently truncated).
+        app()->singleton('nexus-mcp.hmac_secret', static fn () => $secret);
 
-        Route::middleware($middlewareSecret)
+        // Build name→definition map once; avoids O(n) scan per request.
+        $toolMap = [];
+        foreach ($tools as $tool) {
+            $toolMap[$tool->name] = $tool;
+        }
+
+        Route::middleware(HmacMiddleware::class)
             ->prefix($trimmedPrefix)
-            ->group(function () use ($manifest, $tools): void {
+            ->group(function () use ($manifest, $toolMap): void {
 
                 // GET /mcp/manifest
                 Route::get('/mcp/manifest', function () use ($manifest): JsonResponse {
@@ -63,7 +72,7 @@ class McpRouter
                 });
 
                 // POST /mcp/call
-                Route::post('/mcp/call', function (Request $request) use ($tools): JsonResponse {
+                Route::post('/mcp/call', function (Request $request) use ($toolMap): JsonResponse {
                     $body      = $request->json()->all();
                     $toolName  = $body['tool'] ?? null;
                     $arguments = $body['arguments'] ?? [];
@@ -72,13 +81,7 @@ class McpRouter
                         return response()->json(['error' => 'missing tool name'], 400);
                     }
 
-                    $definition = null;
-                    foreach ($tools as $t) {
-                        if ($t->name === $toolName) {
-                            $definition = $t;
-                            break;
-                        }
-                    }
+                    $definition = $toolMap[$toolName] ?? null;
 
                     if ($definition === null) {
                         return response()->json(['error' => "tool not found: {$toolName}"], 404);
@@ -100,7 +103,13 @@ class McpRouter
 
                         return response()->json(['result' => $result]);
                     } catch (\Throwable $e) {
-                        return response()->json(['error' => $e->getMessage()], 400);
+                        // Log the full exception internally; never leak internals to the caller.
+                        Log::error('MCP tool handler threw an exception', [
+                            'tool'      => $toolName,
+                            'exception' => $e,
+                        ]);
+
+                        return response()->json(['error' => 'internal server error'], 500);
                     }
                 });
             });
