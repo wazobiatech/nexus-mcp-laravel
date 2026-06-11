@@ -32,23 +32,27 @@ class McpRouter
     /**
      * Register health, manifest, and tool-call routes.
      *
-     * @param Manifest            $manifest  Service manifest
-     * @param McpToolDefinition[] $tools     Tool definitions with handlers
-     * @param string              $secret    HMAC secret (from MCP_HMAC_SECRET env var)
-     * @param string              $prefix    Optional route prefix (default: empty)
+     * @param Manifest            $manifest    Service manifest
+     * @param McpToolDefinition[] $tools       Tool definitions with handlers
+     * @param string              $secret      HMAC secret (from MCP_HMAC_SECRET env var)
+     * @param string              $prefix      Optional route prefix (default: empty)
+     * @param array               $healthExtra Extra fields merged into the /health response.
+     *                                         e.g. ['server' => 'muse-mcp', 'version' => '1.0.0',
+     *                                                'timestamp' => now()->toISOString()]
      */
     public static function register(
         Manifest $manifest,
         array $tools,
         string $secret,
         string $prefix = '',
+        array $healthExtra = [],
     ): void {
         $trimmedPrefix = trim($prefix, '/');
 
         // Health endpoint — OUTSIDE HMAC group (kubelet probes have no signature)
         $healthPath = $trimmedPrefix ? "/{$trimmedPrefix}/health" : '/health';
-        Route::get($healthPath, function (): JsonResponse {
-            return response()->json(['status' => 'ok']);
+        Route::get($healthPath, function () use ($healthExtra): JsonResponse {
+            return response()->json(array_merge(['status' => 'ok'], $healthExtra));
         });
 
         // Bind secret via container — avoids the middleware-param comma-truncation footgun
